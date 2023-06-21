@@ -8,4 +8,4 @@
  */
 
 rootProject.name = "norrq"
-include("app")
+include("plugin")
