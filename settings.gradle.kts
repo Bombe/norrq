@@ -9,4 +9,4 @@
 
 rootProject.name = "norrq"
 include("wot")
-include("plugin")
+include("norrq")
