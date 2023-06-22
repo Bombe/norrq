@@ -6,6 +6,9 @@ plugins {
 	kotlin("jvm") version "1.8.22"
 }
 
+group = "net.pterodactylus.freenet"
+version = "1-SNAPSHOT"
+
 kotlin {
 	jvmToolchain(8)
 }
