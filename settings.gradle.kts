@@ -8,5 +8,6 @@
  */
 
 rootProject.name = "norrq"
+include("plugin")
 include("wot")
 include("norrq")
