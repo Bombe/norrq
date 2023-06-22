@@ -2,13 +2,13 @@ package net.pterodactylus.norrq.plugin
 
 import freenet.pluginmanager.PluginRespirator
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
+import org.mockito.kotlin.mock
 
 class NorrqPluginTest {
 
 	@Test
 	fun `plugin can be started`() {
-		val respirator = mock<PluginRespirator>()!!
+		val respirator = mock<PluginRespirator>()
 		plugin.runPlugin(respirator)
 	}
 
