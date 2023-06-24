@@ -3,7 +3,6 @@ package net.pterodactylus.freenet.plugin
 import freenet.clients.fcp.FCPPluginConnection
 import freenet.clients.fcp.FCPPluginMessage
 import freenet.pluginmanager.PluginRespirator
-import freenet.support.SimpleFieldSet
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.hasEntry
@@ -87,16 +86,6 @@ class PluginRespiratorPluginConnectionTest {
 	private val pluginConnection = PluginRespiratorPluginConnection("test.TargetPlugin", pluginRespirator)
 
 }
-
-// remove once https://freenet.mantishub.io/view.php?id=7197 is fixed.
-private fun SimpleFieldSet.fixedDirectSubsets() = apply {
-	putSingle("<test>.<test>", "<test>")
-	removeSubset("<test>")
-}.directSubsets()
-
-private fun SimpleFieldSet.toMap(): Map<String, String> = directKeyValues() +
-		fixedDirectSubsets()
-			.flatMap { (key, value) -> value.directKeyValues().map { "$key.${it.key}" to it.value } }
 
 private open class TestFCPPluginConnection : FCPPluginConnection {
 
