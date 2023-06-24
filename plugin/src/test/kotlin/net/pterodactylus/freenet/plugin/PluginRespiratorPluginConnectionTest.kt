@@ -2,6 +2,7 @@ package net.pterodactylus.freenet.plugin
 
 import freenet.clients.fcp.FCPPluginConnection
 import freenet.clients.fcp.FCPPluginMessage
+import freenet.pluginmanager.FredPluginFCPMessageHandler.ClientSideFCPMessageHandler
 import freenet.pluginmanager.PluginRespirator
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
@@ -65,15 +66,27 @@ class PluginRespiratorPluginConnectionTest {
 		}
 	}
 
+	@Test
+	fun `reply from plugin is returned correctly`() {
+		repliesToSend += { it.apply { with(it.params) { putSingle("aaa", "bbb"); putSingle("aaaa", "bbbb") } } }
+		val reply = pluginConnection.sendMessage(mapOf("a" to "b", "aa" to "bb"))
+		assertThat(reply, allOf(hasEntry("aaa", "bbb"), hasEntry("aaaa", "bbbb")))
+	}
+
 	private fun createFcpPluginConnection(messageConsumer: (message: FCPPluginMessage) -> Unit) = object : TestFCPPluginConnection() {
 		override fun send(message: FCPPluginMessage) {
 			messageConsumer(message)
+			repliesToSend.removeFirstOrNull()
+				.let { reply ->
+					registeredFcpMessageHandlers.last().handlePluginFCPMessage(this, reply?.invoke(message) ?: FCPPluginMessage.constructSuccessReply(message))
+				}
 		}
 	}
 
 	private fun createPluginRespirator(fcpPluginConnectionSupplier: () -> FCPPluginConnection) =
 		mock<PluginRespirator>().apply {
-			whenever(connectToOtherPlugin(any(), any())).thenAnswer { _ ->
+			whenever(connectToOtherPlugin(any(), any())).thenAnswer { invocation ->
+				registeredFcpMessageHandlers += invocation.arguments[1] as ClientSideFCPMessageHandler
 				fcpPluginConnectionSupplier()
 					.also { createdFcpPluginConnections += it }
 			}
@@ -81,7 +94,9 @@ class PluginRespiratorPluginConnectionTest {
 
 	private val throwingFCPPluginConnection = createFcpPluginConnection { throw IOException("can’t send") }
 	private val sentMessages = mutableListOf<FCPPluginMessage>()
+	private val repliesToSend = mutableListOf<(FCPPluginMessage) -> FCPPluginMessage>()
 	private val createdFcpPluginConnections = mutableListOf<FCPPluginConnection>()
+	private val registeredFcpMessageHandlers = mutableListOf<ClientSideFCPMessageHandler>()
 	private val pluginRespirator = createPluginRespirator { createFcpPluginConnection(sentMessages::add) }
 	private val pluginConnection = PluginRespiratorPluginConnection("test.TargetPlugin", pluginRespirator)
 
