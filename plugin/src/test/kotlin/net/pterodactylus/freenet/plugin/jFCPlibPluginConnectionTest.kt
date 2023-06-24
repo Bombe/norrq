@@ -74,10 +74,10 @@ class jFCPlibPluginConnectionTest {
 		}
 	}
 
-	private fun createConnectionRequestCountingPluginConnection(fcpConnection: FcpConnection) = jFCPlibPluginConnection({
+	private fun createConnectionRequestCountingPluginConnection(fcpConnection: FcpConnection) = jFCPlibPluginConnection("test.TargetPlugin") {
 		connectionRequests++
 		fcpConnection
-	}, "test.TargetPlugin")
+	}
 
 	private var connectionRequests = 0
 	private val sentMessages = mutableListOf<FcpMessage>()

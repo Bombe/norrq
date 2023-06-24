@@ -9,7 +9,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
 
 @Suppress("ClassName")
-class jFCPlibPluginConnection(private val connectionSupplier: () -> FcpConnection, private val pluginName: String) : PluginConnection {
+class jFCPlibPluginConnection(private val pluginName: String, private val connectionSupplier: () -> FcpConnection) : PluginConnection {
 
 	override fun sendMessage(parameters: Map<String, String>): Map<String, String> {
 		val pluginFcpMessage = buildPluginFcpMessage(parameters)

@@ -5,7 +5,7 @@ import freenet.clients.fcp.FCPPluginMessage
 import freenet.pluginmanager.PluginRespirator
 import java.io.IOException
 
-class PluginRespiratorPluginConnection(private val pluginRespirator: PluginRespirator, private val pluginName: String) {
+class PluginRespiratorPluginConnection(private val pluginName: String, private val pluginRespirator: PluginRespirator) {
 
 	fun sendMessage(parameters: Map<String, String>) {
 		try {

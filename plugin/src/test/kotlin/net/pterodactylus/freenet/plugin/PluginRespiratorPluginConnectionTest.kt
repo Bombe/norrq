@@ -51,7 +51,7 @@ class PluginRespiratorPluginConnectionTest {
 	@Test
 	fun `new plugin talker is requested upon exception`() {
 		val pluginRespirator = createPluginRespirator { throwingFCPPluginConnection }
-		val pluginConnection = PluginRespiratorPluginConnection(pluginRespirator, "test.TargetPlugin")
+		val pluginConnection = PluginRespiratorPluginConnection("test.TargetPlugin", pluginRespirator)
 		assertThrows<IOException> { pluginConnection.sendMessage(mapOf("a" to "b", "aa" to "bb")) }
 		assertThrows<IOException> { pluginConnection.sendMessage(mapOf("a" to "c", "aa" to "cc")) }
 		assertThat(createdFcpPluginConnections, hasSize(2))
@@ -60,7 +60,7 @@ class PluginRespiratorPluginConnectionTest {
 	@Test
 	fun `IO exception from sendMessage is being thrown`() {
 		val pluginRespirator = createPluginRespirator { throwingFCPPluginConnection }
-		val pluginConnection = PluginRespiratorPluginConnection(pluginRespirator, "test.TargetPlugin")
+		val pluginConnection = PluginRespiratorPluginConnection("test.TargetPlugin", pluginRespirator)
 		assertThrows<IOException> {
 			pluginConnection.sendMessage(mapOf("a" to "b", "aa" to "bb"))
 		}
@@ -84,7 +84,7 @@ class PluginRespiratorPluginConnectionTest {
 	private val sentMessages = mutableListOf<FCPPluginMessage>()
 	private val createdFcpPluginConnections = mutableListOf<FCPPluginConnection>()
 	private val pluginRespirator = createPluginRespirator { createFcpPluginConnection(sentMessages::add) }
-	private val pluginConnection = PluginRespiratorPluginConnection(pluginRespirator, "test.TargetPlugin")
+	private val pluginConnection = PluginRespiratorPluginConnection("test.TargetPlugin", pluginRespirator)
 
 }
 
