@@ -1,6 +1,9 @@
 package net.pterodactylus.freenet.plugin
 
+import kotlin.concurrent.thread
+import net.pterodactylus.fcp.FCPPluginReply
 import net.pterodactylus.fcp.FcpConnection
+import net.pterodactylus.fcp.FcpListener
 import net.pterodactylus.fcp.FcpMessage
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.allOf
@@ -58,6 +61,13 @@ class jFCPlibPluginConnectionTest {
 		assertThat(connectionRequests, equalTo(2))
 	}
 
+	@Test
+	fun `reply from plugin is returned correctly`() {
+		repliesToSend += mapOf("aaa" to "bbb", "aaaa" to "bbbb")
+		val reply = jFCPlibPluginConnection.sendMessage(mapOf("a" to "b", "aa" to "bb"))
+		assertThat(reply, allOf(hasEntry("aaa", "bbb"), hasEntry("aaaa", "bbbb")))
+	}
+
 	private fun createThrowingFcpConnection() = object : FcpConnection() {
 		override fun sendMessage(fcpMessage: FcpMessage) {
 			throw IOException("can’t send")
@@ -71,9 +81,30 @@ class jFCPlibPluginConnectionTest {
 
 	private var connectionRequests = 0
 	private val sentMessages = mutableListOf<FcpMessage>()
+	private val registeredFcpListeners = mutableListOf<FcpListener>()
+	private val repliesToSend = mutableListOf<Map<String, String>>()
 	private val fcpConnection = object : FcpConnection() {
 		override fun sendMessage(fcpMessage: FcpMessage) {
 			sentMessages += fcpMessage
+			sendReplyOnNewThread(fcpMessage)
+		}
+
+		private fun sendReplyOnNewThread(fcpMessage: FcpMessage) {
+			(repliesToSend.removeFirstOrNull() ?: emptyMap())
+				.let { reply ->
+					registeredFcpListeners.forEach {
+						val message = FcpMessage("FCPPluginReply")
+						message.setField("Identifier", fcpMessage.getField("Identifier"))
+						reply.mapKeys { (key, value) -> "Replies.$key" }.forEach(message::setField)
+						thread {
+							it.receivedFCPPluginReply(this, FCPPluginReply(message, null))
+						}
+					}
+				}
+		}
+
+		override fun addFcpListener(fcpListener: FcpListener) {
+			registeredFcpListeners += fcpListener
 		}
 	}
 	private val jFCPlibPluginConnection = createConnectionRequestCountingPluginConnection(fcpConnection)
