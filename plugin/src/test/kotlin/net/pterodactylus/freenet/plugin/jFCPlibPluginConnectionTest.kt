@@ -18,7 +18,7 @@ class jFCPlibPluginConnectionTest {
 	fun `sending a message calls the correct method`() {
 		jFCPlibPluginConnection.sendMessage(mapOf("a" to "b", "aa" to "bb"))
 		assertThat(sentMessages.single().name, equalTo("FCPPluginMessage"))
-		assertThat(sentMessages.single().fields, allOf(hasEntry("PluginName", "test.TargetPlugin"), hasEntry("Parameter.a", "b"), hasEntry("Parameter.aa", "bb")))
+		assertThat(sentMessages.single().fields, allOf(hasEntry("PluginName", "test.TargetPlugin"), hasEntry("Param.a", "b"), hasEntry("Param.aa", "bb")))
 	}
 
 	@Test

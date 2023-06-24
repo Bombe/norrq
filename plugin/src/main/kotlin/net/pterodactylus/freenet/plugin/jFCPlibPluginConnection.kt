@@ -23,7 +23,7 @@ class jFCPlibPluginConnection(private val connectionSupplier: () -> FcpConnectio
 	private fun buildPluginFcpMessage(parameters: Map<String, String>) = FcpMessage("FCPPluginMessage").apply {
 		put("PluginName", pluginName)
 		put("Identifier", "jFCPlibPluginConnection-$pluginName-${counter.getAndIncrement()}")
-		parameters.mapKeys { (key, _) -> "Parameter.$key" }.forEach(::put)
+		parameters.mapKeys { (key, _) -> "Param.$key" }.forEach(::put)
 	}
 
 	private var currentConnection: FcpConnection? = null
