@@ -4,39 +4,13 @@ import net.pterodactylus.fcp.FCPPluginReply
 import net.pterodactylus.fcp.FcpAdapter
 import net.pterodactylus.fcp.FcpConnection
 import net.pterodactylus.fcp.FcpMessage
-import java.io.IOException
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
 
 @Suppress("ClassName")
-class jFCPlibPluginConnection(private val pluginName: String, private val connectionSupplier: () -> FcpConnection) : PluginConnection {
+class jFCPlibPluginConnection(pluginName: String, private val connectionSupplier: () -> FcpConnection) : AsyncBasePluginConnection<FcpConnection, FcpMessage, FCPPluginReply>(pluginName) {
 
-	override fun sendMessage(parameters: Map<String, String>): Map<String, String> {
-		val pluginFcpMessage = buildPluginFcpMessage(parameters)
-		val identifier = pluginFcpMessage.getField("Identifier")
-		val latch = CountDownLatch(1)
-		try {
-			synchronized(identifierLatches) {
-				identifierLatches += identifier to latch
-			}
-			getConnectionOrRequestNewConnection().sendMessage(pluginFcpMessage)
-		} catch (e: IOException) {
-			currentConnection = null
-			throw e
-		}
-		latch.await()
-		synchronized(identifierLatches) {
-			return identifierReplies.remove(identifier)
-				?.fields
-				?.filterKeys { it.startsWith("Replies.") }
-				?.mapKeys { (key, value) -> key.removePrefix("Replies.") }
-				?: emptyMap()
-		}
-	}
-
-	private fun getConnectionOrRequestNewConnection() =
-		currentConnection ?: connectionSupplier()
-			.also { currentConnection = it }
+	override fun requestNewConnection() =
+		connectionSupplier()
 			.also {
 				it.addFcpListener(object : FcpAdapter() {
 					override fun receivedFCPPluginReply(fcpConnection: FcpConnection, fcpPluginReply: FCPPluginReply) {
@@ -45,22 +19,25 @@ class jFCPlibPluginConnection(private val pluginName: String, private val connec
 				})
 			}
 
-	private fun handleReply(fcpPluginReply: FCPPluginReply) {
-		synchronized(identifierLatches) {
-			identifierReplies += fcpPluginReply.identifier to fcpPluginReply
-			identifierLatches.remove(fcpPluginReply.identifier)!!.countDown()
-		}
+	override fun sendMessage(connection: FcpConnection, message: FcpMessage) {
+		connection.sendMessage(message)
 	}
 
-	private fun buildPluginFcpMessage(parameters: Map<String, String>) = FcpMessage("FCPPluginMessage").apply {
+	override fun extractReplies(reply: FCPPluginReply) = reply.fields
+		.filterKeys { it.startsWith("Replies.") }
+		.mapKeys { (key, value) -> key.removePrefix("Replies.") }
+
+	override fun buildFcpMessage(parameters: Map<String, String>) = FcpMessage("FCPPluginMessage").apply {
 		put("PluginName", pluginName)
 		put("Identifier", "jFCPlibPluginConnection-$pluginName-${counter.getAndIncrement()}")
 		parameters.mapKeys { (key, _) -> "Param.$key" }.forEach(::put)
 	}
 
-	private var currentConnection: FcpConnection? = null
-	private val identifierLatches = mutableMapOf<String, CountDownLatch>()
-	private val identifierReplies = mutableMapOf<String, FCPPluginReply>()
+	override fun getIdentifier(message: FcpMessage) = message.getField("Identifier")
+
+	private fun handleReply(fcpPluginReply: FCPPluginReply) {
+		storeReply(fcpPluginReply.identifier, fcpPluginReply)
+	}
 
 }
 
